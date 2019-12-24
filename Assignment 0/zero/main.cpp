@@ -29,6 +29,7 @@ inline void glVertex(const Vector3f &a)
 inline void glNormal(const Vector3f &a) 
 { glNormal3fv(a); }
 
+int colorIndex = 0;
 
 // This function is called whenever a "Normal" key press is received.
 void keyboardFunc( unsigned char key, int x, int y )
@@ -40,7 +41,11 @@ void keyboardFunc( unsigned char key, int x, int y )
         break;
     case 'c':
         // add code to change color here
-		cout << "Unhandled key press " << key << "." << endl; 
+		//cout << "Unhandled key press " << key << "." << endl; 
+		if (colorIndex < 3)
+			colorIndex++;
+		else
+			colorIndex = 0;
         break;
     default:
         cout << "Unhandled key press " << key << "." << endl;        
@@ -50,6 +55,9 @@ void keyboardFunc( unsigned char key, int x, int y )
     glutPostRedisplay();
 }
 
+float deltaX = 0;
+float deltaY = 0;
+
 // This function is called whenever a "Special" key press is received.
 // Right now, it's handling the arrow keys.
 void specialFunc( int key, int x, int y )
@@ -58,19 +66,23 @@ void specialFunc( int key, int x, int y )
     {
     case GLUT_KEY_UP:
         // add code to change light position
-		cout << "Unhandled key press: up arrow." << endl;
+		//cout << "Unhandled key press: up arrow." << endl;
+		deltaY += 0.5f;
 		break;
     case GLUT_KEY_DOWN:
         // add code to change light position
-		cout << "Unhandled key press: down arrow." << endl;
+		//cout << "Unhandled key press: down arrow." << endl;
+		deltaY -= 0.5f;
 		break;
     case GLUT_KEY_LEFT:
         // add code to change light position
-		cout << "Unhandled key press: left arrow." << endl;
+		//cout << "Unhandled key press: left arrow." << endl;
+		deltaX -= 0.5f;
 		break;
     case GLUT_KEY_RIGHT:
         // add code to change light position
-		cout << "Unhandled key press: right arrow." << endl;
+		//cout << "Unhandled key press: right arrow." << endl;
+		deltaX += 0.5f;
 		break;
     }
 
@@ -105,7 +117,7 @@ void drawScene(void)
                                  {0.3, 0.8, 0.9, 1.0} };
     
 	// Here we use the first color entry as the diffuse color
-    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, diffColors[0]);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, diffColors[colorIndex]);
 
 	// Define specular color and shininess
     GLfloat specColor[] = {1.0, 1.0, 1.0, 1.0};
@@ -120,7 +132,7 @@ void drawScene(void)
     // Light color (RGBA)
     GLfloat Lt0diff[] = {1.0,1.0,1.0,1.0};
     // Light position
-	GLfloat Lt0pos[] = {1.0f, 1.0f, 5.0f, 1.0f};
+	GLfloat Lt0pos[] = {1.0f + deltaX, 1.0f + deltaY, 5.0f, 1.0f};
 
     glLightfv(GL_LIGHT0, GL_DIFFUSE, Lt0diff);
     glLightfv(GL_LIGHT0, GL_POSITION, Lt0pos);
