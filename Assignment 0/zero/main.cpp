@@ -17,9 +17,11 @@ vector<Vector3f> vecn;
 // This is the list of faces (indices into vecv and vecn)
 vector<vector<unsigned> > vecf;
 
-
 // You will need more global variables to implement color and position changes
+float deltaX = 0;
+float deltaY = 0;
 
+int colorIndex = 0;
 
 // These are convenience functions which allow us to call OpenGL 
 // methods on Vec3d objects
@@ -28,8 +30,6 @@ inline void glVertex(const Vector3f &a)
 
 inline void glNormal(const Vector3f &a) 
 { glNormal3fv(a); }
-
-int colorIndex = 0;
 
 // This function is called whenever a "Normal" key press is received.
 void keyboardFunc( unsigned char key, int x, int y )
@@ -55,8 +55,6 @@ void keyboardFunc( unsigned char key, int x, int y )
     glutPostRedisplay();
 }
 
-float deltaX = 0;
-float deltaY = 0;
 
 // This function is called whenever a "Special" key press is received.
 // Right now, it's handling the arrow keys.
@@ -88,6 +86,39 @@ void specialFunc( int key, int x, int y )
 
 	// this will refresh the screen so that the user sees the light position
     glutPostRedisplay();
+}
+
+void drawLoadedObj()
+{
+	unsigned a,b,c,d,e,f,g,h,i;
+	
+	for(unsigned int i = 0; i < vecf.size(); i++)
+	{
+		glBegin(GL_TRIANGLES);
+		a = vecf[i][0];
+		b = vecf[i][1];
+		c = vecf[i][2];
+		d = vecf[i][3];
+		e = vecf[i][4];
+		f = vecf[i][5];
+		g = vecf[i][6];
+		h = vecf[i][7];
+		i = vecf[i][8];
+
+		// vertex a => normal c
+		glNormal3d(vecn[c-1][0], vecn[c-1][1], vecn[c-1][2]);
+		glVertex3d(vecv[a-1][0], vecv[a-1][1], vecv[a-1][2]);
+
+		// d=>f
+		glNormal3d(vecn[f-1][0], vecn[f-1][1], vecn[f-1][2]);
+		glVertex3d(vecv[d-1][0], vecv[d-1][1], vecv[d-1][2]);
+
+		// vertex g => normal i
+		glNormal3d(vecn[i-1][0], vecn[i-1][1], vecn[i-1][2]);
+		glVertex3d(vecv[g-1][0], vecv[g-1][1], vecv[g-1][2]);
+
+		glEnd();
+	}
 }
 
 // This function is responsible for displaying the object.
@@ -139,8 +170,10 @@ void drawScene(void)
 
 	// This GLUT method draws a teapot.  You should replace
 	// it with code which draws the object you loaded.
-	glutSolidTeapot(1.0);
-    
+	//glutSolidTeapot(1.0);
+
+	drawLoadedObj();
+	
     // Dump the image to the screen.
     glutSwapBuffers();
 
@@ -173,10 +206,53 @@ void reshapeFunc(int w, int h)
     gluPerspective(50.0, 1.0, 1.0, 100.0);
 }
 
+void split(const std::string &s, char delim, vector<unsigned>& result)
+{
+	std::istringstream iss(s);
+	std::string token;
+	while(std::getline(iss, token, delim))
+	{
+		result.push_back(std::stoi(token));
+	}
+}
+
 void loadInput()
 {
 	// load the OBJ file here
+	cout << "LoadInput" <<endl;
+	const int MAX_BUFFER_SIZE = 256;
+	char buffer[MAX_BUFFER_SIZE];
+	while(cin.getline(buffer, MAX_BUFFER_SIZE))
+	{
+		stringstream ss(buffer);
+		Vector3f v;
+		string s;
+		ss >> s;
+		
+		if(s == "v")
+		{
+			ss >> v[0] >> v[1] >> v[2];
+			vecv.push_back(v);
+		}
+		if(s == "vn")
+		{
+			ss >> v[0] >> v[1] >> v[2];
+			vecn.push_back(v);
+		}
+		if(s == "f")
+		{
+			vector<unsigned> face;
+			string token1, token2, token3;
+			ss >> token1 >> token2 >> token3;
+			
+			split(token1, '/', face);
+			split(token2, '/', face);
+			split(token3, '/', face);
+			vecf.push_back(face);
+		}
+	}
 }
+
 
 // Main routine.
 // Set up OpenGL, define the callbacks and start the main loop
