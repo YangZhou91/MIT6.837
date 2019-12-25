@@ -90,32 +90,35 @@ void specialFunc( int key, int x, int y )
 
 void drawLoadedObj()
 {
+	cout << "drawLoadedObj" << endl;
 	unsigned a,b,c,d,e,f,g,h,i;
 	
-	for(unsigned int i = 0; i < vecf.size(); i++)
+	for(unsigned int index = 0; index < vecf.size(); index++)
 	{
 		glBegin(GL_TRIANGLES);
-		a = vecf[i][0];
-		b = vecf[i][1];
-		c = vecf[i][2];
-		d = vecf[i][3];
-		e = vecf[i][4];
-		f = vecf[i][5];
-		g = vecf[i][6];
-		h = vecf[i][7];
-		i = vecf[i][8];
+		a = vecf[index][0];
+		//b = vecf[index][1];
+		c = vecf[index][2];
+
+		d = vecf[index][3];
+		//e = vecf[index][4];
+		f = vecf[index][5];
+		
+		g = vecf[index][6];
+		//h = vecf[index][7];
+		i = vecf[index][8];
 
 		// vertex a => normal c
-		glNormal3d(vecn[c-1][0], vecn[c-1][1], vecn[c-1][2]);
-		glVertex3d(vecv[a-1][0], vecv[a-1][1], vecv[a-1][2]);
+		glNormal3f(vecn[c-1][0], vecn[c-1][1], vecn[c-1][2]);
+		glVertex3f(vecv[a-1][0], vecv[a-1][1], vecv[a-1][2]);
 
 		// d=>f
-		glNormal3d(vecn[f-1][0], vecn[f-1][1], vecn[f-1][2]);
-		glVertex3d(vecv[d-1][0], vecv[d-1][1], vecv[d-1][2]);
+		glNormal3f(vecn[f-1][0], vecn[f-1][1], vecn[f-1][2]);
+		glVertex3f(vecv[d-1][0], vecv[d-1][1], vecv[d-1][2]);
 
 		// vertex g => normal i
-		glNormal3d(vecn[i-1][0], vecn[i-1][1], vecn[i-1][2]);
-		glVertex3d(vecv[g-1][0], vecv[g-1][1], vecv[g-1][2]);
+		glNormal3f(vecn[i-1][0], vecn[i-1][1], vecn[i-1][2]);
+		glVertex3f(vecv[g-1][0], vecv[g-1][1], vecv[g-1][2]);
 
 		glEnd();
 	}
