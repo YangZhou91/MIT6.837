@@ -94,7 +94,7 @@ void specialFunc( int key, int x, int y )
     glutPostRedisplay();
 }
 int angle = 10;
-void drawLoadedObj()
+void drawObjMesh()
 {
 	cout << "drawLoadedObj" << endl;
 	unsigned a,b,c,d,e,f,g,h,i;
@@ -131,6 +131,51 @@ void drawLoadedObj()
 	}
 }
 
+void drawObjMeshByDisplayList()
+{
+	cout << "drawLoadedObj" << endl;
+	unsigned a,b,c,d,e,f,g,h,i;
+
+	// Create one display list
+	GLuint index = glGenLists(1);
+	glNewList(index, GL_COMPILE);
+	glBegin(GL_TRIANGLES);
+	for(unsigned int index = 0; index < vecf.size(); index++)
+	{
+
+		a = vecf[index][0];
+		//b = vecf[index][1];
+		c = vecf[index][2];
+
+		d = vecf[index][3];
+		//e = vecf[index][4];
+		f = vecf[index][5];
+		
+		g = vecf[index][6];
+		//h = vecf[index][7];
+		i = vecf[index][8];
+
+		// vertex a => normal c
+		glNormal3f(vecn[c-1][0], vecn[c-1][1], vecn[c-1][2]);
+		glVertex3f(vecv[a-1][0], vecv[a-1][1], vecv[a-1][2]);
+
+		// d=>f
+		glNormal3f(vecn[f-1][0], vecn[f-1][1], vecn[f-1][2]);
+		glVertex3f(vecv[d-1][0], vecv[d-1][1], vecv[d-1][2]);
+
+		// vertex g => normal i
+		glNormal3f(vecn[i-1][0], vecn[i-1][1], vecn[i-1][2]);
+		glVertex3f(vecv[g-1][0], vecv[g-1][1], vecv[g-1][2]);
+		
+	}
+	glEnd();
+	glEndList();
+
+	// draw
+	glCallList(index);
+	glDeleteLists(index, 1);
+}
+
 
 void timerFunc(int timer)
 {
@@ -138,7 +183,7 @@ void timerFunc(int timer)
 	//cout << angle << endl;
 	angle += 1;
 
-	drawLoadedObj();
+	drawObjMesh();
 	glutPostRedisplay();
 
 	glutTimerFunc(100, timerFunc, 0);
@@ -195,7 +240,8 @@ void drawScene(void)
 	// it with code which draws the object you loaded.
 	//glutSolidTeapot(1.0);
 
-	drawLoadedObj();
+	//drawObjMesh();
+	drawObjMeshByDisplayList();
 	
     // Dump the image to the screen.
     glutSwapBuffers();
