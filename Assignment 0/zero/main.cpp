@@ -93,6 +93,56 @@ void specialFunc( int key, int x, int y )
 	// this will refresh the screen so that the user sees the light position
     glutPostRedisplay();
 }
+
+float mouseX, mouseY;
+bool mouseLeftDown, mouseRightDown;
+float cameraAngleX, cameraAngleY;
+
+void mouseFunc(int button, int state, int x, int y)
+{
+	if(button == GLUT_LEFT_BUTTON)
+	{
+		cout << "left button" <<endl;
+		if(state == GLUT_DOWN)
+			mouseLeftDown = true;
+		if(state == GLUT_UP)
+			mouseLeftDown = false;
+	}
+	if(button == GLUT_RIGHT_BUTTON)
+	{
+		cout << "left button" <<endl;
+		if(state == GLUT_DOWN)
+			mouseRightDown = true;
+		if(state == GLUT_UP)
+			mouseRightDown = false;
+	}
+
+	mouseX = x;
+	mouseY = y;
+}
+
+void mouseMotionFunc(int x, int y)
+{
+	if(mouseLeftDown)
+	{
+		cameraAngleY += (x - mouseX);
+		cameraAngleX += (y - mouseY);
+		mouseX = x;
+		mouseY = y;
+	}
+
+	glutPostRedisplay();
+}
+
+float cameraDistance;
+void mouseWheelFunc(int wheel, int direction, int x, int y)
+{
+	cout << direction << endl;
+	cameraDistance += 0.5 * direction;
+
+	glutPostRedisplay();
+}
+
 int angle = 10;
 void drawObjMesh()
 {
@@ -136,6 +186,9 @@ void drawObjMeshByDisplayList()
 	cout << "drawLoadedObj" << endl;
 	unsigned a,b,c,d,e,f,g,h,i;
 
+	glTranslatef(0, 0, cameraDistance);
+	glRotatef(cameraAngleX, 1, 0,0);
+	glRotatef(cameraAngleY, 0,1 ,0);
 	// Create one display list
 	GLuint index = glGenLists(1);
 	glNewList(index, GL_COMPILE);
@@ -344,7 +397,10 @@ int main( int argc, char** argv )
     // Set up callback functions for key presses
     glutKeyboardFunc(keyboardFunc); // Handles "normal" ascii symbols
     glutSpecialFunc(specialFunc);   // Handles "special" keyboard keys
-
+	glutMouseFunc(mouseFunc);	// Handle mouse press/release
+	glutMotionFunc(mouseMotionFunc);	// Handle mouse drag
+	glutMouseWheelFunc(mouseWheelFunc); // Handle mouse wheel
+	
      // Set up the callback function for resizing windows
     glutReshapeFunc( reshapeFunc );
 
