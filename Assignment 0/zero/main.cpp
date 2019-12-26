@@ -31,6 +31,9 @@ inline void glVertex(const Vector3f &a)
 inline void glNormal(const Vector3f &a) 
 { glNormal3fv(a); }
 
+// forward declaration
+void timerFunc(int);
+
 // This function is called whenever a "Normal" key press is received.
 void keyboardFunc( unsigned char key, int x, int y )
 {
@@ -47,6 +50,9 @@ void keyboardFunc( unsigned char key, int x, int y )
 		else
 			colorIndex = 0;
         break;
+	case 'r':
+    	glutTimerFunc(30, timerFunc, 0); // Callback once every 30ms and pass value 0;
+    	break;
     default:
         cout << "Unhandled key press " << key << "." << endl;        
     }
@@ -87,12 +93,13 @@ void specialFunc( int key, int x, int y )
 	// this will refresh the screen so that the user sees the light position
     glutPostRedisplay();
 }
-
+int angle = 10;
 void drawLoadedObj()
 {
 	cout << "drawLoadedObj" << endl;
 	unsigned a,b,c,d,e,f,g,h,i;
-	
+
+	glRotatef(angle, 0,1,0);
 	for(unsigned int index = 0; index < vecf.size(); index++)
 	{
 		glBegin(GL_TRIANGLES);
@@ -122,6 +129,19 @@ void drawLoadedObj()
 
 		glEnd();
 	}
+}
+
+
+void timerFunc(int timer)
+{
+	cout << "timerfunc" <<endl;
+	//cout << angle << endl;
+	angle += 1;
+
+	drawLoadedObj();
+	glutPostRedisplay();
+
+	glutTimerFunc(100, timerFunc, 0);
 }
 
 // This function is responsible for displaying the object.
@@ -179,7 +199,6 @@ void drawScene(void)
 	
     // Dump the image to the screen.
     glutSwapBuffers();
-
 
 }
 
