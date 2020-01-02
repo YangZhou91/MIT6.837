@@ -23,6 +23,12 @@ float deltaY = 0;
 
 int colorIndex = 0;
 
+float mouseX, mouseY;
+bool mouseLeftDown, mouseRightDown;
+float cameraAngleX, cameraAngleY;
+float cameraDistance;
+
+
 // These are convenience functions which allow us to call OpenGL 
 // methods on Vec3d objects
 inline void glVertex(const Vector3f &a) 
@@ -33,6 +39,7 @@ inline void glNormal(const Vector3f &a)
 
 // forward declaration
 void timerFunc(int);
+void setVertexAndNormal();
 
 // This function is called whenever a "Normal" key press is received.
 void keyboardFunc( unsigned char key, int x, int y )
@@ -94,9 +101,6 @@ void specialFunc( int key, int x, int y )
     glutPostRedisplay();
 }
 
-float mouseX, mouseY;
-bool mouseLeftDown, mouseRightDown;
-float cameraAngleX, cameraAngleY;
 
 void mouseFunc(int button, int state, int x, int y)
 {
@@ -134,7 +138,6 @@ void mouseMotionFunc(int x, int y)
 	glutPostRedisplay();
 }
 
-float cameraDistance;
 void mouseWheelFunc(int wheel, int direction, int x, int y)
 {
 	cout << direction << endl;
@@ -146,24 +149,29 @@ void mouseWheelFunc(int wheel, int direction, int x, int y)
 int angle = 10;
 void drawObjMesh()
 {
-	cout << "drawLoadedObj" << endl;
-	unsigned a,b,c,d,e,f,g,h,i;
+	cout << "drawObjMesh" << endl;
+	
+	glBegin(GL_TRIANGLES);
 
-	glRotatef(angle, 0,1,0);
+	setVertexAndNormal();
+	glEnd();
+}
+
+void setVertexAndNormal()
+{
 	for(unsigned int index = 0; index < vecf.size(); index++)
 	{
-		glBegin(GL_TRIANGLES);
-		a = vecf[index][0];
+		unsigned a = vecf[index][0];
 		//b = vecf[index][1];
-		c = vecf[index][2];
+		unsigned c = vecf[index][2];
 
-		d = vecf[index][3];
+		unsigned d = vecf[index][3];
 		//e = vecf[index][4];
-		f = vecf[index][5];
+		unsigned f = vecf[index][5];
 		
-		g = vecf[index][6];
+		unsigned g = vecf[index][6];
 		//h = vecf[index][7];
-		i = vecf[index][8];
+		unsigned i = vecf[index][8];
 
 		// vertex a => normal c
 		glNormal3f(vecn[c-1][0], vecn[c-1][1], vecn[c-1][2]);
@@ -176,51 +184,19 @@ void drawObjMesh()
 		// vertex g => normal i
 		glNormal3f(vecn[i-1][0], vecn[i-1][1], vecn[i-1][2]);
 		glVertex3f(vecv[g-1][0], vecv[g-1][1], vecv[g-1][2]);
-
-		glEnd();
+		
 	}
 }
 
 void drawObjMeshByDisplayList()
 {
-	cout << "drawLoadedObj" << endl;
-	unsigned a,b,c,d,e,f,g,h,i;
+	cout << "drawObjMeshByDisplayList" << endl;
 
-	glTranslatef(0, 0, cameraDistance);
-	glRotatef(cameraAngleX, 1, 0,0);
-	glRotatef(cameraAngleY, 0,1 ,0);
 	// Create one display list
 	GLuint index = glGenLists(1);
 	glNewList(index, GL_COMPILE);
 	glBegin(GL_TRIANGLES);
-	for(unsigned int index = 0; index < vecf.size(); index++)
-	{
-
-		a = vecf[index][0];
-		//b = vecf[index][1];
-		c = vecf[index][2];
-
-		d = vecf[index][3];
-		//e = vecf[index][4];
-		f = vecf[index][5];
-		
-		g = vecf[index][6];
-		//h = vecf[index][7];
-		i = vecf[index][8];
-
-		// vertex a => normal c
-		glNormal3f(vecn[c-1][0], vecn[c-1][1], vecn[c-1][2]);
-		glVertex3f(vecv[a-1][0], vecv[a-1][1], vecv[a-1][2]);
-
-		// d=>f
-		glNormal3f(vecn[f-1][0], vecn[f-1][1], vecn[f-1][2]);
-		glVertex3f(vecv[d-1][0], vecv[d-1][1], vecv[d-1][2]);
-
-		// vertex g => normal i
-		glNormal3f(vecn[i-1][0], vecn[i-1][1], vecn[i-1][2]);
-		glVertex3f(vecv[g-1][0], vecv[g-1][1], vecv[g-1][2]);
-		
-	}
+	setVertexAndNormal();
 	glEnd();
 	glEndList();
 
@@ -232,13 +208,10 @@ void drawObjMeshByDisplayList()
 
 void timerFunc(int timer)
 {
-	cout << "timerfunc" <<endl;
-	//cout << angle << endl;
+	//cout << "timerfunc" <<endl;
 	angle += 1;
 
-	drawObjMesh();
 	glutPostRedisplay();
-
 	glutTimerFunc(100, timerFunc, 0);
 }
 
@@ -293,8 +266,12 @@ void drawScene(void)
 	// it with code which draws the object you loaded.
 	//glutSolidTeapot(1.0);
 
-	//drawObjMesh();
-	drawObjMeshByDisplayList();
+	glTranslatef(0, 0, cameraDistance);
+	glRotatef(cameraAngleX, 1, 0,0);
+	glRotatef(cameraAngleY, 0,1 ,0);
+	glRotatef(angle, 0,1,0);
+	drawObjMesh();
+	//drawObjMeshByDisplayList();
 	
     // Dump the image to the screen.
     glutSwapBuffers();
