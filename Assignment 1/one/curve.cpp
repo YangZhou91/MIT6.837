@@ -55,10 +55,68 @@ Curve evalBezier( const vector< Vector3f >& P, unsigned steps )
     }
 
     cerr << "\t>>> Steps (type steps): " << steps << endl;
-    cerr << "\t>>> Returning empty curve." << endl;
 
+	Vector4f x, y, z;
+	float t = 0;
+	Matrix4f B = Matrix4f(1, -3, 3, -1,
+						  0, 3, -6, 3,
+						  0, 0, 3, -3,
+	                      0, 0, 0, 1);
+	
+	Matrix4f B_derivative = Matrix4f(-3, 6, -3, 0,
+									 3, -12, 9, 0,
+									 0, 6, -9, 0,
+								     0, 0, 1, 0);
+
+	x = Vector4f(P[0][0], P[1][0], P[2][0], P[3][0]);
+		y = Vector4f(P[0][1], P[1][1], P[2][1], P[3][1]);
+
+
+	Curve curve;
+	
+	for (float i = 0; i < steps; i++)
+	{
+		t = i/steps;
+		Vector4f T = Vector4f(1, t, t*t, t*t*t);
+		CurvePoint curvePoint;
+
+		// Calculate Point on the curve
+		// G * B
+		Vector4f intermediateX(Vector4f::dot(x, B.getCol(0)), Vector4f::dot(x, B.getCol(1)),
+			Vector4f::dot(x, B.getCol(2)), Vector4f::dot(x, B.getCol(3)));
+		Vector4f intermediateY(Vector4f::dot(y, B.getCol(0)), Vector4f::dot(y, B.getCol(1)),
+			Vector4f::dot(y, B.getCol(2)), Vector4f::dot(y, B.getCol(3)));
+		// q(t) = G * B * T
+		float pointX = Vector4f::dot(intermediateX, T);
+		float pointY = Vector4f::dot(intermediateY, T);
+		Vector3f pointOnCurve(pointX, pointY, 0);
+		curvePoint.V = pointOnCurve;
+
+		// Calculate Tangent
+		// G * B'
+		Vector4f intermediateX_derivative(Vector4f::dot(x, B_derivative.getCol(0)), Vector4f::dot(x, B_derivative.getCol(1)), 
+			Vector4f::dot(x, B_derivative.getCol(2)), Vector4f::dot(x, B_derivative.getCol(3)));
+		Vector4f intermediateY_derivative(Vector4f::dot(y, B_derivative.getCol(0)), Vector4f::dot(y, B_derivative.getCol(1)), 
+			Vector4f::dot(y, B_derivative.getCol(2)), Vector4f::dot(y, B_derivative.getCol(3)));
+		// q'(t) = G * B' * T
+		float pointX_derivative = Vector4f::dot(intermediateX_derivative, T);
+		float pointY_derivative = Vector4f::dot(intermediateY_derivative, T);
+		Vector3f pointOnDerivative(pointX_derivative, pointY_derivative, 0);
+		Vector3f tangent = (pointOnDerivative / pointOnDerivative.abs()).normalized();
+		curvePoint.T = tangent;
+
+		// Binormal
+		Vector3f binormal(curvePoint.T.x(), curvePoint.T.y(), 1);
+		curvePoint.B = binormal.normalized();
+		// Normal
+		Vector3f normal = Vector3f::cross(binormal, tangent);
+		curvePoint.N = normal.normalized();
+		curve.push_back(curvePoint);
+	}
+	
     // Right now this will just return this empty curve.
-    return Curve();
+    //return Curve();
+	return curve;
 }
 
 Curve evalBspline( const vector< Vector3f >& P, unsigned steps )
