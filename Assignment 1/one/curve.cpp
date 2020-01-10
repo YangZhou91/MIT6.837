@@ -68,12 +68,13 @@ Curve evalBezier( const vector< Vector3f >& P, unsigned steps )
 									 0, 6, -9, 0,
 								     0, 0, 1, 0);
 
+	// Only 4 control points
 	x = Vector4f(P[0][0], P[1][0], P[2][0], P[3][0]);
-		y = Vector4f(P[0][1], P[1][1], P[2][1], P[3][1]);
-
+	y = Vector4f(P[0][1], P[1][1], P[2][1], P[3][1]);
+	z = Vector4f(P[0][2], P[1][2], P[2][2], P[3][2]);
 
 	Curve curve;
-	
+	Vector3f binormal_0(P[0][0], P[0][1], 1);
 	for (float i = 0; i < steps; i++)
 	{
 		t = i/steps;
@@ -86,10 +87,13 @@ Curve evalBezier( const vector< Vector3f >& P, unsigned steps )
 			Vector4f::dot(x, B.getCol(2)), Vector4f::dot(x, B.getCol(3)));
 		Vector4f intermediateY(Vector4f::dot(y, B.getCol(0)), Vector4f::dot(y, B.getCol(1)),
 			Vector4f::dot(y, B.getCol(2)), Vector4f::dot(y, B.getCol(3)));
+		Vector4f intermediateZ(Vector4f::dot(z, B.getCol(0)), Vector4f::dot(z, B.getCol(1)),
+			Vector4f::dot(z, B.getCol(2)), Vector4f::dot(z, B.getCol(3)));
 		// q(t) = G * B * T
 		float pointX = Vector4f::dot(intermediateX, T);
 		float pointY = Vector4f::dot(intermediateY, T);
-		Vector3f pointOnCurve(pointX, pointY, 0);
+		float pointZ = Vector4f::dot(intermediateZ, T);
+		Vector3f pointOnCurve(pointX, pointY, pointZ);
 		curvePoint.V = pointOnCurve;
 
 		// Calculate Tangent
@@ -98,20 +102,40 @@ Curve evalBezier( const vector< Vector3f >& P, unsigned steps )
 			Vector4f::dot(x, B_derivative.getCol(2)), Vector4f::dot(x, B_derivative.getCol(3)));
 		Vector4f intermediateY_derivative(Vector4f::dot(y, B_derivative.getCol(0)), Vector4f::dot(y, B_derivative.getCol(1)), 
 			Vector4f::dot(y, B_derivative.getCol(2)), Vector4f::dot(y, B_derivative.getCol(3)));
+		Vector4f intermediateZ_derivative(Vector4f::dot(z, B_derivative.getCol(0)), Vector4f::dot(z, B_derivative.getCol(1)),
+			Vector4f::dot(z, B_derivative.getCol(2)), Vector4f::dot(z, B_derivative.getCol(3)));
 		// q'(t) = G * B' * T
 		float pointX_derivative = Vector4f::dot(intermediateX_derivative, T);
 		float pointY_derivative = Vector4f::dot(intermediateY_derivative, T);
-		Vector3f pointOnDerivative(pointX_derivative, pointY_derivative, 0);
-		Vector3f tangent = (pointOnDerivative / pointOnDerivative.abs()).normalized();
+		float pointZ_derivative = Vector4f::dot(intermediateZ_derivative, T);
+		Vector3f pointOnDerivative(pointX_derivative, pointY_derivative, pointZ_derivative);
+		//Vector3f tangent = (pointOnDerivative / pointOnDerivative.abs()).normalized();
+		Vector3f tangent = pointOnDerivative.normalized();
 		curvePoint.T = tangent;
 
-		// Binormal
-		Vector3f binormal(curvePoint.T.x(), curvePoint.T.y(), 1);
-		curvePoint.B = binormal.normalized();
-		// Normal
-		Vector3f normal = Vector3f::cross(binormal, tangent);
-		curvePoint.N = normal.normalized();
-		curve.push_back(curvePoint);
+		// 2-D
+		if(z == Vector4f())
+		{
+			// Binormal
+			Vector3f binormal(curvePoint.T.x(), curvePoint.T.y(), 1);
+			curvePoint.B = binormal.normalized();
+
+			// Normal
+			Vector3f normal = Vector3f::cross(binormal, tangent);
+			curvePoint.N = normal.normalized();
+			curve.push_back(curvePoint);
+		}
+		else
+		{
+			// Normal
+			Vector3f normal = Vector3f::cross(binormal_0, tangent);
+			curvePoint.N = normal.normalized();
+
+			//Update Binormal
+			binormal_0 = Vector3f::cross(tangent, normal).normalized();
+			curvePoint.B = binormal_0;
+			curve.push_back(curvePoint);
+		}
 	}
 	
     // Right now this will just return this empty curve.
