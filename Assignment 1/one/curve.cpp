@@ -56,9 +56,9 @@ Curve evalBezier( const vector< Vector3f >& P, unsigned steps )
 
     cerr << "\t>>> Steps (type steps): " << steps << endl;
 
-	Vector4f x, y, z;
+	Vector4f Gx, Gy, Gz;
 	float t = 0;
-	Matrix4f B = Matrix4f(1, -3, 3, -1,
+	Matrix4f Bezier = Matrix4f(1, -3, 3, -1,
 						  0, 3, -6, 3,
 						  0, 0, 3, -3,
 	                      0, 0, 0, 1);
@@ -69,9 +69,9 @@ Curve evalBezier( const vector< Vector3f >& P, unsigned steps )
 								     0, 0, 1, 0);
 
 	// Only 4 control points
-	x = Vector4f(P[0][0], P[1][0], P[2][0], P[3][0]);
-	y = Vector4f(P[0][1], P[1][1], P[2][1], P[3][1]);
-	z = Vector4f(P[0][2], P[1][2], P[2][2], P[3][2]);
+	Gx = Vector4f(P[0][0], P[1][0], P[2][0], P[3][0]);
+	Gy = Vector4f(P[0][1], P[1][1], P[2][1], P[3][1]);
+	Gz = Vector4f(P[0][2], P[1][2], P[2][2], P[3][2]);
 
 	Curve curve;
 	Vector3f binormal_0(P[0][0], P[0][1], 1);
@@ -83,12 +83,12 @@ Curve evalBezier( const vector< Vector3f >& P, unsigned steps )
 
 		// Calculate Point on the curve
 		// G * B
-		Vector4f intermediateX(Vector4f::dot(x, B.getCol(0)), Vector4f::dot(x, B.getCol(1)),
-			Vector4f::dot(x, B.getCol(2)), Vector4f::dot(x, B.getCol(3)));
-		Vector4f intermediateY(Vector4f::dot(y, B.getCol(0)), Vector4f::dot(y, B.getCol(1)),
-			Vector4f::dot(y, B.getCol(2)), Vector4f::dot(y, B.getCol(3)));
-		Vector4f intermediateZ(Vector4f::dot(z, B.getCol(0)), Vector4f::dot(z, B.getCol(1)),
-			Vector4f::dot(z, B.getCol(2)), Vector4f::dot(z, B.getCol(3)));
+		Vector4f intermediateX(Vector4f::dot(Gx, Bezier.getCol(0)), Vector4f::dot(Gx, Bezier.getCol(1)),
+			Vector4f::dot(Gx, Bezier.getCol(2)), Vector4f::dot(Gx, Bezier.getCol(3)));
+		Vector4f intermediateY(Vector4f::dot(Gy, Bezier.getCol(0)), Vector4f::dot(Gy, Bezier.getCol(1)),
+			Vector4f::dot(Gy, Bezier.getCol(2)), Vector4f::dot(Gy, Bezier.getCol(3)));
+		Vector4f intermediateZ(Vector4f::dot(Gz, Bezier.getCol(0)), Vector4f::dot(Gz, Bezier.getCol(1)),
+			Vector4f::dot(Gz, Bezier.getCol(2)), Vector4f::dot(Gz, Bezier.getCol(3)));
 		// q(t) = G * B * T
 		float pointX = Vector4f::dot(intermediateX, T);
 		float pointY = Vector4f::dot(intermediateY, T);
@@ -98,12 +98,12 @@ Curve evalBezier( const vector< Vector3f >& P, unsigned steps )
 
 		// Calculate Tangent
 		// G * B'
-		Vector4f intermediateX_derivative(Vector4f::dot(x, B_derivative.getCol(0)), Vector4f::dot(x, B_derivative.getCol(1)), 
-			Vector4f::dot(x, B_derivative.getCol(2)), Vector4f::dot(x, B_derivative.getCol(3)));
-		Vector4f intermediateY_derivative(Vector4f::dot(y, B_derivative.getCol(0)), Vector4f::dot(y, B_derivative.getCol(1)), 
-			Vector4f::dot(y, B_derivative.getCol(2)), Vector4f::dot(y, B_derivative.getCol(3)));
-		Vector4f intermediateZ_derivative(Vector4f::dot(z, B_derivative.getCol(0)), Vector4f::dot(z, B_derivative.getCol(1)),
-			Vector4f::dot(z, B_derivative.getCol(2)), Vector4f::dot(z, B_derivative.getCol(3)));
+		Vector4f intermediateX_derivative(Vector4f::dot(Gx, B_derivative.getCol(0)), Vector4f::dot(Gx, B_derivative.getCol(1)), 
+			Vector4f::dot(Gx, B_derivative.getCol(2)), Vector4f::dot(Gx, B_derivative.getCol(3)));
+		Vector4f intermediateY_derivative(Vector4f::dot(Gy, B_derivative.getCol(0)), Vector4f::dot(Gy, B_derivative.getCol(1)), 
+			Vector4f::dot(Gy, B_derivative.getCol(2)), Vector4f::dot(Gy, B_derivative.getCol(3)));
+		Vector4f intermediateZ_derivative(Vector4f::dot(Gz, B_derivative.getCol(0)), Vector4f::dot(Gz, B_derivative.getCol(1)),
+			Vector4f::dot(Gz, B_derivative.getCol(2)), Vector4f::dot(Gz, B_derivative.getCol(3)));
 		// q'(t) = G * B' * T
 		float pointX_derivative = Vector4f::dot(intermediateX_derivative, T);
 		float pointY_derivative = Vector4f::dot(intermediateY_derivative, T);
@@ -114,7 +114,7 @@ Curve evalBezier( const vector< Vector3f >& P, unsigned steps )
 		curvePoint.T = tangent;
 
 		// 2-D
-		if(z == Vector4f())
+		if(Gz == Vector4f())
 		{
 			// Binormal
 			Vector3f binormal(curvePoint.T.x(), curvePoint.T.y(), 1);
@@ -166,10 +166,47 @@ Curve evalBspline( const vector< Vector3f >& P, unsigned steps )
     }
 
     cerr << "\t>>> Steps (type steps): " << steps << endl;
-    cerr << "\t>>> Returning empty curve." << endl;
 
-    // Return an empty curve right now.
-    return Curve();
+	float fraction = float(1) / float(6);
+	Matrix4f Bspline = Matrix4f(fraction*1, fraction*-3, fraction * 3, fraction*-1,
+		fraction * 4, fraction * 0, fraction*-6, fraction * 3,
+		fraction * 1, fraction * 3, fraction * 3, fraction*-3,
+		fraction * 0, fraction * 0, fraction * 0, fraction * 1);
+	Matrix4f Bezier = Matrix4f(1, -3, 3, -1,
+							   0, 3, -6, 3,
+							   0, 0, 3, -3,
+		                       0, 0, 0, 1);
+	Vector4f Gx, Gy, Gz;
+	// Only 4 control points
+	Gx = Vector4f(P[0][0], P[1][0], P[2][0], P[3][0]);
+	Gy = Vector4f(P[0][1], P[1][1], P[2][1], P[3][1]);
+	Gz = Vector4f(P[0][2], P[1][2], P[2][2], P[3][2]);
+
+	// Calculate G * Bspline * Bbezier_inverse
+	Vector4f intermediateX(Vector4f::dot(Gx, Bspline.getCol(0)), Vector4f::dot(Gx, Bspline.getCol(1)),
+		Vector4f::dot(Gx, Bspline.getCol(2)), Vector4f::dot(Gx, Bspline.getCol(3)));
+	Vector4f intermediateY(Vector4f::dot(Gy, Bspline.getCol(0)), Vector4f::dot(Gy, Bspline.getCol(1)),
+		Vector4f::dot(Gy, Bspline.getCol(2)), Vector4f::dot(Gy, Bspline.getCol(3)));
+	Vector4f intermediateZ(Vector4f::dot(Gz, Bspline.getCol(0)), Vector4f::dot(Gz, Bspline.getCol(1)),
+		Vector4f::dot(Gz, Bspline.getCol(2)), Vector4f::dot(Gz, Bspline.getCol(3)));
+    
+	Vector4f finalX(Vector4f::dot(intermediateX, Bezier.inverse().getCol(0)), Vector4f::dot(intermediateX, Bezier.inverse().getCol(1)), 
+		Vector4f::dot(intermediateX, Bezier.inverse().getCol(2)), Vector4f::dot(intermediateX, Bezier.inverse().getCol(3)));
+	Vector4f finalY(Vector4f::dot(intermediateY, Bezier.inverse().getCol(0)), Vector4f::dot(intermediateY, Bezier.inverse().getCol(1)),
+		Vector4f::dot(intermediateY, Bezier.inverse().getCol(2)), Vector4f::dot(intermediateY, Bezier.inverse().getCol(3)));
+	Vector4f finalZ(Vector4f::dot(intermediateZ, Bezier.inverse().getCol(0)), Vector4f::dot(intermediateZ, Bezier.inverse().getCol(1)),
+		Vector4f::dot(intermediateZ, Bezier.inverse().getCol(2)), Vector4f::dot(intermediateZ, Bezier.inverse().getCol(3)));
+	
+	Vector3f newP1(finalX[0], finalY[0], finalZ[0]);
+	Vector3f newP2(finalX[1], finalY[1], finalZ[1]);
+	Vector3f newP3(finalX[2], finalY[2], finalZ[2]);
+	Vector3f newP4(finalX[3], finalY[3], finalZ[3]);
+
+	vector<Vector3f> controlPoints = { newP1, newP2, newP3, newP4 };
+
+	return evalBezier(controlPoints, steps);
+ 	// Return an empty curve right now.
+    //return Curve();
 }
 
 Curve evalCircle( float radius, unsigned steps )
