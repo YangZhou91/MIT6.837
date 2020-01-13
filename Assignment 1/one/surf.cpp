@@ -1,5 +1,8 @@
 #include "surf.h"
 #include "extra.h"
+
+#define _USE_MATH_DEFINES
+#include <math.h>
 using namespace std;
 
 namespace
@@ -19,6 +22,14 @@ namespace
     }
 }
 
+int normalizeIndex(int index, int size)
+{
+	if(index < size - 1)
+		return index;
+	else
+		return index - (size - 1);
+}
+
 Surface makeSurfRev(const Curve &profile, unsigned steps)
 {
     Surface surface;
@@ -30,11 +41,52 @@ Surface makeSurfRev(const Curve &profile, unsigned steps)
     }
 
     // TODO: Here you should build the surface.  See surf.h for details.
+	
+	float segment = 2 * M_PI / steps;
 
-    cerr << "\t>>> makeSurfRev called (but not implemented).\n\t>>> Returning empty surface." << endl;
+	for(int i = 0; i < steps; i++)
+	{
+		for(int j = 0; j < profile.size(); j++)
+		{
+			Matrix3f M = Matrix3f::rotateY(segment * i);
+			// 1. Generate vertices S(u,v) = R(v) * q(u)
+			Vector3f rotatedVertex = M * profile[j].V;
+
+			surface.VV.push_back(rotatedVertex);
+
+			// 2. Generate normal
+			Vector3f rotatedNormal = M.transposed().inverse() * profile[j].N;
+			surface.VN.push_back(rotatedNormal);
+		}
+	}
+
+
+	// 3. Generate faces
+	for(int i1 = 0; i1 < steps; i1++)
+	{
+		for(int j1 = 0; j1 < profile.size(); j1++)
+		{
+			
+			Tup3u tuple1;
+			tuple1[0] = normalizeIndex(i1 * profile.size() + j1, surface.VV.size());
+			tuple1[1] = normalizeIndex(i1 * profile.size() + j1 + 1, surface.VV.size());
+			tuple1[2] = normalizeIndex((i1 + 1) * profile.size() + j1, surface.VV.size());
+
+			Tup3u tuple2;
+			tuple2[0] = normalizeIndex(i1 * profile.size() + j1 + 1, surface.VV.size());
+			tuple2[1] = normalizeIndex((i1 + 1) * profile.size() + j1 + 1, surface.VV.size());
+			tuple2[2] = normalizeIndex((i1 + 1) * profile.size() + j1, surface.VV.size());
+
+			surface.VF.push_back(tuple1);
+			surface.VF.push_back(tuple2);
+		}
+	}
+    //cerr << "\t>>> makeSurfRev called (but not implemented).\n\t>>> Returning empty surface." << endl;
  
     return surface;
 }
+
+
 
 Surface makeGenCyl(const Curve &profile, const Curve &sweep )
 {
