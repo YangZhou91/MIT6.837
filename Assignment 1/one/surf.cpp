@@ -30,6 +30,29 @@ int normalizeIndex(int index, int size)
 		return index - (size - 1);
 }
 
+void generateMesh(int steps, Curve profile, Surface &surface)
+{
+	for(int i1 = 0; i1 < steps; i1++)
+	{
+		for(int j1 = 0; j1 < profile.size(); j1++)
+		{
+			
+			Tup3u tuple1;
+			tuple1[0] = normalizeIndex(i1 * profile.size() + j1, surface.VV.size());
+			tuple1[1] = normalizeIndex(i1 * profile.size() + j1 + 1, surface.VV.size());
+			tuple1[2] = normalizeIndex((i1 + 1) * profile.size() + j1, surface.VV.size());
+
+			Tup3u tuple2;
+			tuple2[0] = normalizeIndex(i1 * profile.size() + j1 + 1, surface.VV.size());
+			tuple2[1] = normalizeIndex((i1 + 1) * profile.size() + j1 + 1, surface.VV.size());
+			tuple2[2] = normalizeIndex((i1 + 1) * profile.size() + j1, surface.VV.size());
+
+			surface.VF.push_back(tuple1);
+			surface.VF.push_back(tuple2);
+		}
+	}
+}
+
 Surface makeSurfRev(const Curve &profile, unsigned steps)
 {
     Surface surface;
@@ -64,7 +87,7 @@ Surface makeSurfRev(const Curve &profile, unsigned steps)
 
 
 	// 3. Generate faces
-	for(int i1 = 0; i1 < steps; i1++)
+	/*for(int i1 = 0; i1 < steps; i1++)
 	{
 		for(int j1 = 0; j1 < profile.size(); j1++)
 		{
@@ -82,7 +105,8 @@ Surface makeSurfRev(const Curve &profile, unsigned steps)
 			surface.VF.push_back(tuple1);
 			surface.VF.push_back(tuple2);
 		}
-	}
+	}*/
+	generateMesh(steps, profile, surface);
     //cerr << "\t>>> makeSurfRev called (but not implemented).\n\t>>> Returning empty surface." << endl;
  
     return surface;
