@@ -66,7 +66,7 @@ Curve evalBezier( const vector< Vector3f >& P, unsigned steps )
 	Matrix4f B_derivative = Matrix4f(-3, 6, -3, 0,
 									 3, -12, 9, 0,
 									 0, 6, -9, 0,
-								     0, 0, 1, 0);
+								     0, 0, 3, 0);
 
 	// Only 4 control points
 	Gx = Vector4f(P[0][0], P[1][0], P[2][0], P[3][0]);
@@ -117,7 +117,7 @@ Curve evalBezier( const vector< Vector3f >& P, unsigned steps )
 		if(Gz == Vector4f())
 		{
 			// Binormal
-			Vector3f binormal(curvePoint.T.x(), curvePoint.T.y(), 1);
+			Vector3f binormal(0, 0, 1);
 			curvePoint.B = binormal.normalized();
 
 			// Normal
