@@ -56,7 +56,9 @@ Surface makeSurfRev(const Curve &profile, unsigned steps)
 
 			// 2. Generate normal
 			Vector3f rotatedNormal = M.transposed().inverse() * profile[j].N;
-			surface.VN.push_back(rotatedNormal);
+
+			// reverse normal to make opengl happy
+			surface.VN.push_back(-rotatedNormal);
 		}
 	}
 
