@@ -74,7 +74,7 @@ Curve evalBezier( const vector< Vector3f >& P, unsigned steps )
 	Gz = Vector4f(P[0][2], P[1][2], P[2][2], P[3][2]);
 
 	Curve curve;
-	Vector3f binormal_0(P[0][0], P[0][1], 1);
+	Vector3f binormal_0(P[0][0], P[0][1], P[0][2]);
 	for (float i = 0; i < steps; i++)
 	{
 		t = i/steps;

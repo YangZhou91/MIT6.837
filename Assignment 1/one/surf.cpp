@@ -126,8 +126,46 @@ Surface makeGenCyl(const Curve &profile, const Curve &sweep )
 
     // TODO: Here you should build the surface.  See surf.h for details.
 
-    cerr << "\t>>> makeGenCyl called (but not implemented).\n\t>>> Returning empty surface." <<endl;
+    //cerr << "\t>>> makeGenCyl called (but not implemented).\n\t>>> Returning empty surface." <<endl;
 
+	// profile is 2D curve, sweep is 3D curve
+	for(unsigned i = 0; i < sweep.size(); i++)
+	{
+		for(unsigned j = 0; j < profile.size(); j++)
+		{
+			// 1. generate vertex
+			// P(t,r) = P(t) + u(r)*n(t) + v(r)*b(t)
+			Vector3f transformedVert = sweep[i].V + profile[j].V.x() * sweep[i].N + profile[j].V.y() * sweep[i].B;
+			surface.VV.push_back(transformedVert);
+
+			Vector3f tangent;
+			
+			if(j == 0)
+			{
+				Vector3f nextTransformedVert = sweep[i].V + profile[j+1].V.x() * sweep[i].N + profile[j+1].V.y() * sweep[i].B;
+				// p1 - p0
+				tangent = nextTransformedVert - transformedVert;
+			}
+			else if(j == profile.size() - 1)
+			{
+				Vector3f prevTransformedVert = sweep[i].V + profile[j-1].V.x() * sweep[i].N + profile[j-1].V.y() * sweep[i].B;
+				tangent = transformedVert - prevTransformedVert;
+			}else
+			{
+				Vector3f vertexPlus1 = sweep[i].V + profile[j+1].V.x() * sweep[i].N + profile[j+1].V.y() * sweep[i].B;
+				Vector3f vertexMinus1= sweep[i].V + profile[j-1].V.x() * sweep[i].N + profile[j-1].V.y() * sweep[i].B;
+				tangent = vertexPlus1 - vertexMinus1;
+			}
+
+			// 2. generate normal
+			Vector3f normal = tangent.normalized();
+			surface.VN.push_back(normal);
+		}
+	}
+
+	
+	generateMesh(sweep.size(), profile, surface);
+	
     return surface;
 }
 
