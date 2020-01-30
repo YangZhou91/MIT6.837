@@ -1,6 +1,7 @@
 #include "SkeletalModel.h"
 
 #include <FL/Fl.H>
+#include <iostream>
 
 using namespace std;
 
@@ -42,9 +43,53 @@ void SkeletalModel::draw(Matrix4f cameraMatrix, bool skeletonVisible)
 void SkeletalModel::loadSkeleton( const char* filename )
 {
 	// Load the skeleton from file here.
+	cout << "Loading skeleton " << filename << endl;
+	std::ifstream ifs(filename);
+	if (!ifs)
+    {
+        cerr<< filename << " not found\a" << endl;
+        exit(0);
+    }
+	float x, y, z;
+	int index;
+	int count = 0;
+	while(ifs >> x >> y >> z >> index)
+	{
+		count ++;
+		cout << x << " " << y << " " << z  << " " << index << endl;
+		
+		Joint *joint = new Joint();
+		
+		Matrix4f transform(1,0,0,x,
+							0,1,0,y,
+							0,0,1,z,
+							0,0,0,1); 
+		//joint->transform = transform;
+		joint->transform = Matrix4f::translation(Vector3f(x, y, z));		
+		m_joints.push_back(joint);
+		if(index >= 0)
+		{
+			m_joints[index]->children.push_back(joint);
+		}
+	}
+	ifs.close();
+	m_rootJoint = m_joints.front();
 }
 
-void SkeletalModel::drawJoints( )
+void dfsForJoint(Joint* joint, MatrixStack myMatrixS)
+{
+	myMatrixS.push(joint->transform);
+
+	for (int i = 0; i < joint->children.size(); i++) {
+		dfsForJoint(joint->children[i], myMatrixS);
+	}
+
+	glLoadMatrixf(myMatrixS.top());
+	glutSolidSphere(0.025f, 12, 12);
+	myMatrixS.pop();
+}
+
+void SkeletalModel::drawJoints()
 {
 	// Draw a sphere at each joint. You will need to add a recursive helper function to traverse the joint hierarchy.
 	//
@@ -55,6 +100,9 @@ void SkeletalModel::drawJoints( )
 	// (glPushMatrix, glPopMatrix, glMultMatrix).
 	// You should use your MatrixStack class
 	// and use glLoadMatrix() before your drawing call.
+	
+	dfsForJoint(m_rootJoint, m_matrixStack);
+
 }
 
 void SkeletalModel::drawSkeleton( )
