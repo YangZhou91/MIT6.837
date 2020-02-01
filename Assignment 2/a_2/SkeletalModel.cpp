@@ -60,11 +60,6 @@ void SkeletalModel::loadSkeleton( const char* filename )
 		
 		Joint *joint = new Joint();
 		
-		Matrix4f transform(1,0,0,x,
-							0,1,0,y,
-							0,0,1,z,
-							0,0,0,1); 
-		//joint->transform = transform;
 		joint->transform = Matrix4f::translation(Vector3f(x, y, z));		
 		m_joints.push_back(joint);
 		if(index >= 0)
@@ -76,18 +71,75 @@ void SkeletalModel::loadSkeleton( const char* filename )
 	m_rootJoint = m_joints.front();
 }
 
-void dfsForJoint(Joint* joint, MatrixStack myMatrixS)
+void dfsForJoint(Joint* joint, MatrixStack stack)
 {
-	myMatrixS.push(joint->transform);
+	stack.push(joint->transform);
 
 	for (int i = 0; i < joint->children.size(); i++) {
-		dfsForJoint(joint->children[i], myMatrixS);
+		dfsForJoint(joint->children[i], stack);
 	}
 
-	glLoadMatrixf(myMatrixS.top());
+	glLoadMatrixf(stack.top());
 	glutSolidSphere(0.025f, 12, 12);
-	myMatrixS.pop();
+	stack.pop();
 }
+
+float getDistance(Vector3f v1, Vector3f v2){
+
+	return sqrt(pow(v1.x() - v2.x(), 2) + pow(v1.y() - v2.y(), 2) + pow(v1.z() - v2.z(), 2));
+}
+
+
+void dfsForBone(Joint* joint, MatrixStack stack, Joint* rootNode){
+	
+	stack.push(joint->transform);
+
+	for(int i = 0; i < joint->children.size(); i++)
+	{
+		// draw bone to parent
+		dfsForBone(joint->children[i], stack, rootNode);
+	}
+	stack.pop();
+
+	if(joint != rootNode)
+	{
+		Matrix4f translation = Matrix4f::translation(0,0,0.5f);
+		Vector3f tansform = joint->transform.getCol(3).xyz();
+
+		float length = tansform.abs();
+		Matrix4f scale = Matrix4f::scaling(0.03f, 0.03f, length);
+		
+		Vector3f rnd(0,0,1);
+		Vector3f z = tansform.normalized();
+		Vector3f y = Vector3f::cross(z, rnd).normalized();
+		Vector3f x = Vector3f::cross(y, z).normalized();
+
+		Matrix4f rotation;
+		Vector4f col1(x, 0);
+		Vector4f col2(y, 0);
+		Vector4f col3(z, 0);
+		Vector4f col4(0, 0, 0, 1);
+
+		rotation.setCol(0, col1);
+		rotation.setCol(1, col2);
+		rotation.setCol(2, col3);
+		rotation.setCol(3, col4);
+
+
+		stack.push(rotation);
+		stack.push(scale);
+		stack.push(translation);
+
+		glLoadMatrixf(stack.top());
+
+		glutSolidCube(1.0f);
+		stack.pop();
+		stack.pop();
+		stack.pop();
+	}
+}
+
+
 
 void SkeletalModel::drawJoints()
 {
@@ -108,6 +160,8 @@ void SkeletalModel::drawJoints()
 void SkeletalModel::drawSkeleton( )
 {
 	// Draw boxes between the joints. You will need to add a recursive helper function to traverse the joint hierarchy.
+	
+	dfsForBone(m_rootJoint, m_matrixStack, m_rootJoint);
 }
 
 void SkeletalModel::setJointTransform(int jointIndex, float rX, float rY, float rZ)
